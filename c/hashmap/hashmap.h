@@ -19,8 +19,6 @@
 #define HM_FORMULA HM_ATTEMTPS
 #endif
 
-
-
 typedef struct {
   char* key;
   char* value;

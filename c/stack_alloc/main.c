@@ -140,7 +140,6 @@ void stack_free(void* ptr) {
   for (int i = 0; i < HEAP_SIZE_BYTES; i++) {
     size += heap[index_of_size_bytes+i] * _pow(256, i);
   }
-  printf("!!!%i\n", size);
   heap[index] = 0;
   // also free bytes with size of a memory cell
   for (int i=1; i < HEAP_SIZE_BYTES+1; i++) {

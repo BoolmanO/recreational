@@ -31,7 +31,7 @@ typedef struct {
 } HashMap;
 
 
-HashMap* hm_init(int size);
+HashMap* hm_init(unsigned int size);
 void* hm_get(HashMap* hm, char* key);
 bool hm_ins(HashMap* hm, char* key, void* value);
 void hm_del(HashMap* hm, char* key);

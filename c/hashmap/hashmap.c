@@ -7,6 +7,9 @@
 HashMapItem* hmi_new(char* key, void* value)
 {
   HashMapItem* i = malloc(sizeof(HashMapItem));
+  if (i==NULL) {
+    return NULL;
+  }
   i->key = strdup(key);
   i->value = strdup(value);
   return i;
@@ -37,15 +40,22 @@ int get_hashed_index(char* string, int hmsize, int attempt)
   return (int)((hash_a + (attempt * (hash_b + 1)) + attempt) % hmsize);
 }
 
-HashMap* hm_init(int size)
+HashMap* hm_init(unsigned int size)
 {
   if (size<1) {
    return NULL;
   }
   HashMap* hm = malloc(sizeof(HashMap));
+  if (hm==NULL) {
+    return NULL;
+  }
   hm->size = size;
   hm->count = 0; // Are we really need a count?
   hm->items = calloc((size_t)hm->size, sizeof(HashMapItem*));
+  if (hm->items==NULL) {
+    hm_free(hm);
+    return NULL;
+  }
   return hm;
 }
 
@@ -98,10 +108,12 @@ void hm_del(HashMap* hm, char* key)
 
 void hm_free(HashMap* hm)
 {
-  for (int i=0; i < hm->size; i++) {
-    HashMapItem* item = hm->items[i];
-    if (item!=NULL) {
-      hmi_free(item);
+  if (hm->items!=NULL) {
+    for (int i=0; i < hm->size; i++) {
+      HashMapItem* item = hm->items[i];
+      if (item!=NULL) {
+        hmi_free(item);
+      }
     }
   }
   free(hm->items);

@@ -2,6 +2,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <limits.h>
 #include "hashmap.h"
 
 HashMapItem* hmi_new(char* key, void* value)
@@ -22,22 +23,21 @@ void hmi_free(HashMapItem* i)
   free(i);
 }
 
-unsigned long hash_function(char* string, int par, int hmsize)
+unsigned long hash_function(char* str, int par)
 {
-  unsigned long hash = 0;
-  int string_len = strlen(string);
-  for (int i=0; i < string_len; i++) {
-    hash += (unsigned long)pow(par, string_len-(i+1)) * string[i];
-  }
-  hash = hash % hmsize;
+  unsigned long hash = 5381;
+  int c;
+
+  while (c = *str++)
+    hash = ((hash << 5) + hash) + c + par; /* hash * 33 + c */
+
   return hash;
 }
 
 int get_hashed_index(char* string, int hmsize, int attempt)
 {
-  unsigned long hash_a = hash_function(string, HM_PAR_A, hmsize);
-  unsigned long hash_b = hash_function(string, HM_PAR_B, hmsize);
-  return (int)((hash_a + (attempt * (hash_b + 1)) + attempt) % hmsize);
+  unsigned long hash = hash_function(string, attempt);
+  return (int)((hash - attempt) % hmsize);
 }
 
 HashMap* hm_init(unsigned int size)
@@ -64,7 +64,12 @@ bool hm_ins(HashMap* hm, char* key, void* value)
   int attempt = 0;
   while (attempt < HM_FORMULA) {
     int index = get_hashed_index(key, hm->size, attempt);
-    if (hm->items[index]!=NULL) {
+    HashMapItem* item = hm->items[index];
+    if (item!=NULL) {
+      if (strcmp(item->key, key) == 0) {
+        free(item->value);
+        item->value = value;
+      }
       attempt++; 
       continue;
     }
@@ -84,7 +89,7 @@ void* hm_get(HashMap* hm, char* key)
     int index = get_hashed_index(key, hm->size, attempt);
     HashMapItem* item = hm->items[index];
      
-    if (item && strcmp(item->key, key)==0) {
+    if (item && strcmp(item->key, key) == 0) {
       return item->value;
     }
     attempt++;
@@ -120,17 +125,36 @@ void hm_free(HashMap* hm)
   free(hm);
 }
 
-bool hm_alloc_more(HashMap* hm, int additional_size) 
+HashMapItem** hm_items(HashMap* hm, int* not_null)
 {
-  int new_size = hm->size+additional_size;
-  HashMapItem** new_ptr = realloc(hm->items, (size_t)new_size*sizeof(HashMapItem*));
-  if (new_ptr==NULL) {
-    return false;
+  HashMapItem** arr = (HashMapItem**)calloc((size_t)hm->size, sizeof(HashMapItem*));
+  if (arr==NULL) return NULL;
+  *not_null = 0;
+  for (int i=0; i < hm->size; i++) {
+    HashMapItem* item = hm->items[i];
+    if (item==NULL) continue;
+    arr[*not_null] = item;
+    (*not_null)++;
   }
-  for (int i = hm->size; i < new_size; i++) {
+  return arr;
+}
+
+bool hm_alloc_more(HashMap* hm, size_t additional_size)
+{
+  if (additional_size < 1) return false;
+  // overflow
+  if (hm->size > SIZE_MAX / sizeof(HashMapItem*) - additional_size) return false; 
+  size_t new_size = hm->size+additional_size;
+
+  HashMapItem** new_ptr = realloc(hm->items, (size_t)new_size * sizeof(HashMapItem*));
+  if (new_ptr==NULL) return false; 
+  for (size_t i = hm->size; i < new_size; i++) {
     new_ptr[i] = NULL;
   }
   hm->items = new_ptr;
   hm->size = new_size; 
   return true;
 }
+
+
+// TODO: pop, copy (maybe alloc_less?)

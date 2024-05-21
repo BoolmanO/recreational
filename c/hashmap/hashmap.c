@@ -14,7 +14,7 @@ HashMapItem* hmi_new(char* key, void* value)
     return NULL;
   }
   i->key = strdup(key);
-  i->value = strdup(value);
+  i->value = value;
   return i;
 }
 
@@ -30,7 +30,7 @@ unsigned long hash_function(char* str, int par)
   unsigned long hash = 5381;
   int c;
 
-  while (c = *str++)
+  while ((c = *str++))
     hash = ((hash << 5) + hash) + c + par; /* hash * 33 + c */
 
   return hash;
@@ -115,7 +115,7 @@ void hm_del(HashMap* hm, char* key)
 void hm_free(HashMap* hm)
 {
   if (hm->items!=NULL) {
-    for (int i=0; i < hm->size; i++) {
+    for (size_t i=0; i < hm->size; i++) {
       HashMapItem* item = hm->items[i];
       if (item!=NULL) {
         hmi_free(item);
@@ -131,7 +131,7 @@ HashMapItem** hm_items(HashMap* hm, int* not_null)
   HashMapItem** arr = (HashMapItem**)calloc(hm->size, sizeof(HashMapItem*));
   if (arr==NULL) return NULL;
   *not_null = 0;
-  for (int i=0; i < hm->size; i++) {
+  for (size_t i=0; i < hm->size; i++) {
     HashMapItem* item = hm->items[i];
     if (item==NULL) continue;
     arr[*not_null] = item;
@@ -177,7 +177,6 @@ bool hm_alloc_more(HashMap* hm, size_t additional_size)
   HashMapItem** items = hm_items(hm, &not_null);
 
   hm->size = new_size;
-  HashMap* new_hm = hm_init(new_size);
   for (int i=0; i < not_null; i++) {
     HashMapItem* item = items[i];
     int attempt = 0;

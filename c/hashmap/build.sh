@@ -3,4 +3,4 @@ if [ ! -d "target" ]; then
   mkdir target
 fi
 
-gcc -o ./target/main main.c hashmap.c -lm -g
+gcc -o ./target/main main.c hashmap.c -lm -g -Wall -Wextra

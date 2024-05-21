@@ -5,7 +5,7 @@
 #define ITERCOUNT 469
 char* arr[ITERCOUNT] = {0};
 
-void main() 
+int main() 
 {
   HashMap* hm = hm_init(1);
   for (int i = 0; i < ITERCOUNT; i++) {
@@ -20,6 +20,7 @@ void main()
     free(arr[i]);
     arr[i] = NULL;
   }
-  printf("%i %i\n", hm->size, *(int*)hm_get(hm, "str69"));
-  printf("%i %i\n", hm->size, *(int*)hm_get(hm, "str420"));
+  printf("%li %i\n", hm->size, *(int*)hm_get(hm, "str69"));
+  printf("%li %i\n", hm->size, *(int*)hm_get(hm, "str420"));
+  return 69420;
 }

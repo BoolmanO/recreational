@@ -8,7 +8,7 @@
 
 typedef struct {
   char* key;
-  char* value;
+  void* value;
 } HashMapItem;
 
 typedef struct {

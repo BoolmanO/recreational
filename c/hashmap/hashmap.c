@@ -197,6 +197,7 @@ bool hm_alloc_more(HashMap* hm, size_t additional_size)
   return true;
 }
 // TODO: pop, hm_copy
+// TODO: single header???
 // TODO: {
 // change HashMapItem** items to HashMapItem* items
 // store bite array with NULL or not NULL

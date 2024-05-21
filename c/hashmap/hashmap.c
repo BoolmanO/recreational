@@ -201,3 +201,6 @@ bool hm_alloc_more(HashMap* hm, size_t additional_size)
 // change HashMapItem** items to HashMapItem* items
 // store bite array with NULL or not NULL
 // }
+// TODO: key char* -> key uintptr
+// TODO: stdint
+// TODO: const pointers in function signatures

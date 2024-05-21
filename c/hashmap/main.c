@@ -13,12 +13,13 @@ void main()
     sprintf(str, "str%d", i);
     arr[i] = malloc(strlen(str) + 1);
     strcpy(arr[i], str);
-    hm_ins(hm, str, &i);
+    hm_set(hm, str, &i);
   }
 
   for (int i = 0; i < ITERCOUNT; i++) {
     free(arr[i]);
     arr[i] = NULL;
   }
-  printf("%i %i\n", hm->size, *(hm->items[3]->value));
+  printf("%i %i\n", hm->size, *(int*)hm_get(hm, "str69"));
+  printf("%i %i\n", hm->size, *(int*)hm_get(hm, "str420"));
 }

@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <limits.h>
+#include <stdlib.h>
+#include <stdint.h>
 #include "hashmap.h"
 
 HashMapItem* hmi_new(char* key, void* value)
@@ -50,7 +52,6 @@ HashMap* hm_init(unsigned int size)
     return NULL;
   }
   hm->size = size;
-  hm->count = 0; // Are we really need a count?
   hm->items = calloc((size_t)hm->size, sizeof(HashMapItem*));
   if (hm->items==NULL) {
     hm_free(hm);
@@ -59,7 +60,7 @@ HashMap* hm_init(unsigned int size)
   return hm;
 }
 
-bool hm_ins(HashMap* hm, char* key, void* value)
+bool hm_set(HashMap* hm, char* key, void* value)
 {
   int attempt = 0;
   while (attempt < HM_FORMULA) {
@@ -79,7 +80,7 @@ bool hm_ins(HashMap* hm, char* key, void* value)
   if(!hm_alloc_more(hm, hm->size)) {
     return false;
   }
-  return hm_ins(hm, key, value);
+  return hm_set(hm, key, value);
 }
 
 void* hm_get(HashMap* hm, char* key)
@@ -127,7 +128,7 @@ void hm_free(HashMap* hm)
 
 HashMapItem** hm_items(HashMap* hm, int* not_null)
 {
-  HashMapItem** arr = (HashMapItem**)calloc((size_t)hm->size, sizeof(HashMapItem*));
+  HashMapItem** arr = (HashMapItem**)calloc(hm->size, sizeof(HashMapItem*));
   if (arr==NULL) return NULL;
   *not_null = 0;
   for (int i=0; i < hm->size; i++) {
@@ -139,22 +140,64 @@ HashMapItem** hm_items(HashMap* hm, int* not_null)
   return arr;
 }
 
+bool hm_ins(HashMap* hm, HashMapItem* source)
+{
+  int attempt = 0;
+  while (attempt < HM_FORMULA) {
+    int index = get_hashed_index(source->key, hm->size, attempt);
+    HashMapItem* item = hm->items[index];
+    if (item!=NULL) {
+      if (strcmp(item->key, source->key) == 0) {
+        hmi_free(item);
+        hm->items[index] = source;
+        return true;
+      }
+      attempt++; 
+      continue;
+    }
+    hm->items[index] = source;
+    return true;
+  }
+  if(!hm_alloc_more(hm, hm->size)) {
+    return false;
+  }
+  return hm_ins(hm, source);
+}
+
 bool hm_alloc_more(HashMap* hm, size_t additional_size)
 {
   if (additional_size < 1) return false;
   // overflow
-  if (hm->size > SIZE_MAX / sizeof(HashMapItem*) - additional_size) return false; 
+  if (hm->size > SIZE_MAX / sizeof(HashMapItem*) - additional_size) return false;
   size_t new_size = hm->size+additional_size;
+  HashMapItem** new_ptr = calloc(new_size, sizeof(HashMapItem*));
+  if (new_ptr==NULL) return false;
+  
+  int not_null;
+  HashMapItem** items = hm_items(hm, &not_null);
 
-  HashMapItem** new_ptr = realloc(hm->items, (size_t)new_size * sizeof(HashMapItem*));
-  if (new_ptr==NULL) return false; 
-  for (size_t i = hm->size; i < new_size; i++) {
-    new_ptr[i] = NULL;
+  hm->size = new_size;
+  HashMap* new_hm = hm_init(new_size);
+  for (int i=0; i < not_null; i++) {
+    HashMapItem* item = items[i];
+    int attempt = 0;
+    while (attempt < HM_FORMULA) {
+      int index = get_hashed_index(item->key, new_size, attempt);
+      if (new_ptr[index]==NULL) {
+        new_ptr[index] = item;
+        break;
+      }
+      attempt++;
+    }
   }
+  free(hm->items);
   hm->items = new_ptr;
-  hm->size = new_size; 
+  hm->size = new_size;
+  free(items);
   return true;
 }
-
-
-// TODO: pop, copy (maybe alloc_less?)
+// TODO: pop, hm_copy
+// TODO: {
+// change HashMapItem** items to HashMapItem* items
+// store bite array with NULL or not NULL
+// }

@@ -3,8 +3,8 @@
 #ifndef HASHMAP
 
 #define HASHMAP
-#define HM_ATTEMTPS 30
-#define HM_FORMULA HM_ATTEMTPS
+#define HM_ATTEMPTS 30
+#define HM_FORMULA HM_ATTEMPTS
 
 typedef struct {
   char* key;

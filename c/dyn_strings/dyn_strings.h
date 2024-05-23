@@ -8,6 +8,14 @@ typedef struct {
   size_t length;
 } DynString;
 
+typedef struct {
+  DynString source;
+  size_t index;
+  wchar_t current_wchar;
+} dstr_CallbackContext;
+
+typedef bool (*dstr_bool_cb_t)(dstr_CallbackContext);
+typedef wchar_t (*dstr_wchar_cb_t)(dstr_CallbackContext);
 
 // just initialzie struct with NULL content and 0 length
 // use this only for creating buffers
@@ -23,6 +31,13 @@ DynString dstr_own(wchar_t* origin);
 // just free the content and set size to 0
 void dstr_release(DynString *dstr);
 
+void dstr_uppercase_cb(DynString* dstr, dstr_bool_cb_t callback);
+void dstr_uppercase_range_cb(DynString* dstr, size_t start, size_t end, dstr_bool_cb_t callback);
+void dstr_uppercase_iter_cb(DynString* dstr, size_t start, size_t iterations, dstr_bool_cb_t callback);
+void dstr_lowercase_cb(DynString* dstr, dstr_bool_cb_t callback);
+void dstr_lowercase_range_cb(DynString* dstr, size_t start, size_t end, dstr_bool_cb_t callback);
+void dstr_lowercase_iter_cb(DynString* dstr, size_t start, size_t iterations, dstr_bool_cb_t callback);
+
 void dstr_uppercase(DynString* dstr);
 void dstr_uppercase_range(DynString* dstr, size_t start, size_t end);
 void dstr_uppercase_iter(DynString* dstr, size_t start, size_t iterations);
@@ -36,9 +51,9 @@ bool dstr_concat_index(DynString* origin, DynString additional, size_t start_ind
 bool dstr_concat_index_sep(DynString* origin, DynString additional, size_t start_index, DynString sep);
 
 // if in _strip function callback is NULL, using default strip that look for '\n' '\t' and ' ' 
-void dstr_strip_right_cb(DynString* dstr, bool (*callback)(wchar_t));
-void dstr_strip_left_cb(DynString* dstr, bool (*callback)(wchar_t));
-void dstr_strip_both_cb(DynString* dstr, bool (*callback)(wchar_t));
+void dstr_strip_right_cb(DynString* dstr, dstr_bool_cb_t callback);
+void dstr_strip_left_cb(DynString* dstr, dstr_bool_cb_t callback);
+void dstr_strip_both_cb(DynString* dstr, dstr_bool_cb_t callback);
 
 // just shorthands for dstr_strip_*_cb with NULL callback (using default strip);
 void dstr_strip_right(DynString* dstr);
@@ -47,9 +62,6 @@ void dstr_strip_both(DynString* dstr);
 
 bool dstr_format(DynString* buffer, DynString format, ...);
 
-
-// TODO:
-// add _cb prefix with callback provided for dstr_lowercase_* and dstr_uppercase_*
 
 // TODO:
 // bool dstr_remove(DynString* origin, size_t index);

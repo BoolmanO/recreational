@@ -20,6 +20,7 @@ int main()
   wprintf(L"%ls", buffer.content);
   wprintf(L"\n-------------------------\n"); // default strip also remove \n (u can pass ur own strip callback)
   dstr_uppercase_range(&buffer, 6, 9);
+  dstr_uppercase(&buffer);
   wprintf(L"%ls", buffer.content);
 
   return 0;

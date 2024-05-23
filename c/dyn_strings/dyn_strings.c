@@ -17,9 +17,28 @@
   #define OPEN_DUMMY_FILE() (printf_dummy_file = fopen("NUL", "wb"))
 #endif
 
-bool strip_default(wchar_t c)
+bool strip_cb_default(dstr_CallbackContext ctx)
 {
+  wchar_t c = ctx.current_wchar;
   return (c == L' ' || c == L'\t' || c == L'\n');
+}
+
+bool true_cb_default(dstr_CallbackContext ctx __attribute__((unused)))
+{
+  return true;
+}
+
+dstr_CallbackContext dstr_cbctx_new(DynString source)
+{
+  dstr_CallbackContext ctx;
+  ctx.source = source;
+  return ctx;
+}
+
+void dstr_cbctx_next(dstr_CallbackContext* origin, size_t index, wchar_t current_wchar)
+{
+  origin->index = index;
+  origin->current_wchar = current_wchar;
 }
 
 DynString dstr_init()
@@ -61,46 +80,85 @@ void dstr_release(DynString* dstr)
   dstr->length = 0;
 }
 
+
+
+//////
+void dstr_uppercase_cb(DynString* dstr, dstr_bool_cb_t callback)
+{
+  dstr_uppercase_range_cb(dstr, 0, dstr->length-1, callback);
+}
+
+void dstr_uppercase_range_cb(DynString* dstr, size_t start, size_t end, dstr_bool_cb_t callback)
+{
+  if (callback == NULL) {
+    callback = true_cb_default;
+  }
+  dstr_CallbackContext cbctx = dstr_cbctx_new(*dstr);
+  wchar_t* wstr = dstr->content;
+  for (size_t i = start; wstr[i] != L'\0' && i < end; i++) {
+    dstr_cbctx_next(&cbctx, i, wstr[i]);
+    if (callback(cbctx)==false) break;
+    wstr[i] = towupper(wstr[i]);
+  }
+}
+
+void dstr_uppercase_iter_cb(DynString* dstr, size_t start, size_t iterations, dstr_bool_cb_t callback)
+{
+  dstr_uppercase_range_cb(dstr, start, start+iterations, callback);
+}
+
+void dstr_lowercase_cb(DynString* dstr, dstr_bool_cb_t callback)
+{
+  dstr_lowercase_range_cb(dstr, 0, dstr->length-1, callback);
+}
+
+void dstr_lowercase_range_cb(DynString* dstr, size_t start, size_t end, dstr_bool_cb_t callback)
+{
+  if (callback == NULL) {
+    callback = true_cb_default;
+  }
+  dstr_CallbackContext cbctx = dstr_cbctx_new(*dstr);
+  wchar_t* wstr = dstr->content;
+  for (size_t i = start; wstr[i] != L'\0' && i < end; i++) {
+    dstr_cbctx_next(&cbctx, i, wstr[i]);
+    if (callback(cbctx)==false) break;
+    wstr[i] = towlower(wstr[i]);
+  }
+}
+
+void dstr_lowercase_iter_cb(DynString* dstr, size_t start, size_t iterations, dstr_bool_cb_t callback)
+{
+  dstr_lowercase_range_cb(dstr, start, start+iterations, callback);
+}
+
 void dstr_uppercase(DynString* dstr)
 {
-  wchar_t* wstr = dstr->content;
-    for (size_t i = 0; wstr[i] != L'\0'; i++) {
-      wstr[i] = towupper(wstr[i]);
-    }
+  dstr_uppercase_range_cb(dstr, 0, dstr->length-1, NULL);
 }
 
 void dstr_uppercase_range(DynString* dstr, size_t start, size_t end)
 {
-  wchar_t* wstr = dstr->content;
-    for (size_t i = start; wstr[i] != L'\0' && i < end; i++) {
-      wstr[i] = towupper(wstr[i]);
-    }
+  dstr_uppercase_range_cb(dstr, start, end, NULL);
 }
 
 void dstr_uppercase_iter(DynString* dstr, size_t start, size_t iterations)
 {
-  dstr_uppercase_range(dstr, start, start+iterations);
+  dstr_uppercase_range_cb(dstr, start, start+iterations, NULL);
 }
 
 void dstr_lowercase(DynString* dstr)
 {
-  wchar_t* wstr = dstr->content;
-    for (size_t i = 0; wstr[i] != L'\0'; i++) {
-      wstr[i] = towlower(wstr[i]);
-    }
+  dstr_lowercase_range_cb(dstr, 0, dstr->length-1, NULL);
 }
 
 void dstr_lowercase_range(DynString* dstr, size_t start, size_t end)
 {
-  wchar_t* wstr = dstr->content;
-    for (size_t i = start; wstr[i] != L'\0' && i < end; i++) {
-      wstr[i] = towlower(wstr[i]);
-    }
+  dstr_lowercase_range_cb(dstr, start, end, NULL);
 }
 
 void dstr_lowercase_iter(DynString* dstr, size_t start, size_t iterations)
 {
-  dstr_lowercase_range(dstr, start, start+iterations);
+  dstr_lowercase_range_cb(dstr, start, start+iterations, NULL);
 }
 
 bool dstr_concat(DynString* origin, DynString additional)
@@ -176,31 +234,40 @@ bool dstr_concat_index_sep(DynString* origin, DynString additional, size_t start
   return dstr_concat_index(origin, sep, start_index);
 }
 
-void dstr_strip_right_cb(DynString* dstr, bool (*callback)(wchar_t))
+void dstr_strip_right_cb(DynString* dstr, dstr_bool_cb_t callback)
 {
   if (dstr->content == NULL || dstr->length == 0) {
     return;
   }
   if (callback == NULL) {
-    callback = strip_default;
+    callback = strip_cb_default;
   }
+
+  dstr_CallbackContext cbctx = dstr_cbctx_new(*dstr);
+
   size_t i = dstr->length;
-  while (i > 0 && callback(dstr->content[i - 1])) {
+  while (i > 0) {
+    dstr_cbctx_next(&cbctx, i, dstr->content[i-1]);
+    if (callback(cbctx) == false) break;
     dstr->content[--i] = L'\0';
     dstr->length--;
   }
 }
 
-void dstr_strip_left_cb(DynString* dstr, bool (*callback)(wchar_t))
+void dstr_strip_left_cb(DynString* dstr, dstr_bool_cb_t callback)
 {
   if (dstr->content == NULL || dstr->length == 0) {
     return;
   }
   if (callback == NULL) {
-    callback = strip_default;
+    callback = strip_cb_default;
   }
+  dstr_CallbackContext cbctx = dstr_cbctx_new(*dstr);
+
   size_t start = 0;
-  while (start < dstr->length && callback(dstr->content[start])) {
+  while (start < dstr->length) {
+    dstr_cbctx_next(&cbctx, start, dstr->content[start]);
+    if (callback(cbctx) == false) break;
     start++;
   }
 
@@ -214,7 +281,7 @@ void dstr_strip_left_cb(DynString* dstr, bool (*callback)(wchar_t))
   }
 }
 
-void dstr_strip_both_cb(DynString* dstr, bool (*callback)(wchar_t)) 
+void dstr_strip_both_cb(DynString* dstr, dstr_bool_cb_t callback) 
 {
   dstr_strip_right_cb(dstr, callback);
   dstr_strip_left_cb(dstr, callback);
@@ -259,3 +326,5 @@ bool dstr_format(DynString* buffer, DynString format, ...)
   va_end(args);
   return true;
 }
+
+// TODO: use macros instead of 1 line functions

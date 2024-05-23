@@ -10,18 +10,16 @@ int main()
   DynString definition = dstr_from(L"хороший человек капибара!!      \n");
   DynString buffer = dstr_init();
 
-  dstr_strip_both(&definition); // equal to dstr_strip_both_cb(&definition, NULL)
-  
+  dstr_strip_both(&definition);  
   dstr_format(&buffer, hello_template, definition.content);
-  
-  wprintf(L"%ls", buffer.content);
+  dstr_uppercase_iter_cb(&buffer, 0, 6969, NULL);
+  wprintf(L"%ls|end|", buffer.content);
   wprintf(L"-------------------------\n");
-  dstr_strip_both_cb(&buffer, NULL); // equal to dstr_strip_both(&buffer)
-  wprintf(L"%ls", buffer.content);
-  wprintf(L"\n-------------------------\n"); // default strip also remove \n (u can pass ur own strip callback)
+  dstr_strip_both_cb(&buffer, NULL);
+  wprintf(L"%ls|end|", buffer.content);
+  wprintf(L"\n-------------------------\n");
   dstr_uppercase_range(&buffer, 6, 9);
-  dstr_uppercase(&buffer);
-  wprintf(L"%ls", buffer.content);
+  wprintf(L"%ls|end|", buffer.content);
 
   return 0;
 }

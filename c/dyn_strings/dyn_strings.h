@@ -62,16 +62,61 @@ void dstr_strip_both(DynString* dstr);
 
 bool dstr_format(DynString* buffer, DynString format, ...);
 
+#define dstr_uppercase_cb(dstr, callback) \
+  dstr_uppercase_range_cb((dstr), 0, (dstr->length-1), (callback))
+
+#define dstr_uppercase_iter_cb(dstr, start, iterations, callback) \
+    dstr_uppercase_range_cb((dstr), (start), (start) + (iterations), (callback))
+
+#define dstr_lowercase_cb(dstr, callback) \
+  dstr_lowercase_range_cb((dstr), 0, (dstr->length-1), (callback))
+
+#define dstr_lowercase_iter_cb(dstr, start, iterations, callback) \
+  dstr_lowercase_range_cb((dstr), (start), (start) + (iterations), (callback))
+
+#define dstr_uppercase(dstr) \
+  dstr_uppercase_range_cb((dstr), 0, (dstr->length-1), NULL)
+
+#define dstr_uppercase_range(dstr, start, end) \
+  dstr_uppercase_range_cb((dstr), (start), (end), NULL)
+
+#define dstr_uppercase_iter(dstr, start, iterations) \
+  dstr_uppercase_range_cb((dstr), (start), (start) + (iterations), NULL)
+
+#define dstr_lowercase(dstr) \
+  dstr_lowercase_range_cb((dstr), 0, (dstr->length-1), NULL)
+
+#define dstr_lowercase_range(dstr, start, end) \
+  dstr_lowercase_range_cb((dstr), (start), (end), NULL)
+
+#define dstr_lowercase_iter(dstr, start, iterations) \
+  dstr_lowercase_range_cb((dstr), (start), (start) + (iterations), NULL)
+
+
+#define dstr_strip_both_cb(dstr, callback) \
+  do { \
+    dstr_strip_right_cb((dstr), (callback)); \
+    dstr_strip_left_cb((dstr), (callback)); \
+  } while (0)
+
+#define dstr_strip_left(dstr) \
+  dstr_strip_left_cb((dstr), NULL)
+
+#define dstr_strip_right(dstr) \
+  dstr_strip_right_cb((dstr), NULL)
+
+#define dstr_strip_both(dstr) \
+  dstr_strip_both_cb((dstr), NULL)
 
 // TODO:
 // bool dstr_remove(DynString* origin, size_t index);
 // bool dstr_remove_range(DynString* origin, size_t start, size_t end);
 // bool dstr_remove_iter(DynString* origin, size_t start, size_t iterations);
 
+// TODO: single header library
+
 // TODO:
 // void dstr_separate(DynString* origin, DynString* buffer, index);
 // void dstr_separate_iter(DynString* origin, ...) ???
 
-// TODO:
-// improve callbacks workflow, add smth like dstr_CallbackContext
 #endif // !DYN_STRINGS

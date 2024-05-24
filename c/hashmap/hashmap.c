@@ -5,15 +5,16 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <wchar.h>
 #include "hashmap.h"
 
-HashMapItem* hmi_new(char* key, void* value)
+HashMapItem* hmi_new(wchar_t* key, void* value)
 {
   HashMapItem* i = malloc(sizeof(HashMapItem));
   if (i==NULL) {
     return NULL;
   }
-  i->key = strdup(key);
+  i->key = wcsdup(key);
   i->value = value;
   return i;
 }
@@ -25,7 +26,7 @@ void hmi_free(HashMapItem* i)
   free(i);
 }
 
-unsigned long hash_function(char* str, int par)
+unsigned long hash_function(wchar_t* str, int par)
 {
   unsigned long hash = 5381;
   int c;
@@ -36,7 +37,7 @@ unsigned long hash_function(char* str, int par)
   return hash;
 }
 
-int get_hashed_index(char* string, int hmsize, int attempt)
+int get_hashed_index(wchar_t* string, int hmsize, int attempt)
 {
   unsigned long hash = hash_function(string, attempt);
   return (int)((hash - attempt) % hmsize);
@@ -60,14 +61,14 @@ HashMap* hm_init(unsigned int size)
   return hm;
 }
 
-bool hm_set(HashMap* hm, char* key, void* value)
+bool hm_set(HashMap* hm, wchar_t* key, void* value)
 {
   int attempt = 0;
   while (attempt < HM_FORMULA) {
     int index = get_hashed_index(key, hm->size, attempt);
     HashMapItem* item = hm->items[index];
     if (item!=NULL) {
-      if (strcmp(item->key, key) == 0) {
+      if (wcscmp(item->key, key) == 0) {
         free(item->value);
         item->value = value;
       }
@@ -83,14 +84,14 @@ bool hm_set(HashMap* hm, char* key, void* value)
   return hm_set(hm, key, value);
 }
 
-void* hm_get(HashMap* hm, char* key)
+void* hm_get(HashMap* hm, wchar_t* key)
 {
   int attempt = 0;
   while (attempt < HM_FORMULA) {
     int index = get_hashed_index(key, hm->size, attempt);
     HashMapItem* item = hm->items[index];
      
-    if (item && strcmp(item->key, key) == 0) {
+    if (item && wcscmp(item->key, key) == 0) {
       return item->value;
     }
     attempt++;
@@ -98,13 +99,13 @@ void* hm_get(HashMap* hm, char* key)
   return NULL;
 }
 
-void hm_del(HashMap* hm, char* key)
+void hm_del(HashMap* hm, wchar_t* key)
 {
   int attempt = 0;
   while (attempt < HM_FORMULA) {
     int index = get_hashed_index(key, hm->size, attempt);
     HashMapItem* item = hm->items[index];
-    if (item!=NULL && strcmp(item->key, key)==0) {
+    if (item!=NULL && wcscmp(item->key, key)==0) {
       hmi_free(item);
       hm->items[index] = NULL;
     }
@@ -147,7 +148,7 @@ bool hm_ins(HashMap* hm, HashMapItem* source)
     int index = get_hashed_index(source->key, hm->size, attempt);
     HashMapItem* item = hm->items[index];
     if (item!=NULL) {
-      if (strcmp(item->key, source->key) == 0) {
+      if (wcscmp(item->key, source->key) == 0) {
         hmi_free(item);
         hm->items[index] = source;
         return true;
@@ -201,6 +202,5 @@ bool hm_alloc_more(HashMap* hm, size_t additional_size)
 // change HashMapItem** items to HashMapItem* items
 // store bite array with NULL or not NULL
 // }
-// TODO: key char* -> key uintptr
 // TODO: stdint
 // TODO: const pointers in function signatures

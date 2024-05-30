@@ -9,7 +9,6 @@ int main()
   DynString hello_template = dstr_from(L"             hello %ls всего тебе хорошего!             \n\n");
   DynString definition = dstr_from(L"хороший человек капибара!!      \n");
   DynString buffer = dstr_init();
-
   dstr_strip_both(&definition);  
   dstr_format(&buffer, hello_template, definition.content);
   dstr_uppercase_iter_cb(&buffer, 0, 6969, NULL);

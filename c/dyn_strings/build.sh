@@ -3,4 +3,4 @@ if [ ! -d "target" ]; then
   mkdir target
 fi
 
-gcc -o3 -o ./target/main main.c dyn_strings.c -g -Wall -Wextra
+gcc -o3 -o ./target/main main.c -g -Wall -Wextra
